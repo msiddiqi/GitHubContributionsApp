@@ -1,0 +1,79 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="${packageName}.${activityClass}"
+    android:layout_margin="5dp">
+
+    <TableLayout
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:orientation="horizontal">
+
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="97dp"
+            android:layout_gravity="left|top"
+            android:weightSum="1">
+
+            <ImageView
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:id="@+id/imgProfilePic"
+                android:layout_weight="0.43"
+                android:contentDescription="@string/ImageContentDescription" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:textAppearance="?android:attr/textAppearanceLarge"
+                android:id="@+id/txtName"
+                android:gravity="center"
+                android:layout_marginLeft="15dp"
+                android:textAlignment="center" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:weightSum="1">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="59dp"
+                android:textAppearance="?android:attr/textAppearanceLarge"
+                android:id="@+id/txtCreatedAt" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="59dp"
+                android:textAppearance="?android:attr/textAppearanceLarge"
+                android:id="@+id/txtNumFollowers" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="59dp"
+                android:textAppearance="?android:attr/textAppearanceLarge"
+                android:id="@+id/txtBlog"
+                android:layout_gravity="center_horizontal" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="45dp"
+                android:textAppearance="?android:attr/textAppearanceLarge"
+                android:id="@+id/txtMyRepositories"
+                android:text="@string/my_repositories" />
+
+            <ListView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/listViewRepositories" />
+
+        </LinearLayout>
+
+    </TableLayout>
+
+</RelativeLayout>
