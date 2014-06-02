@@ -1,35 +1,40 @@
 package com.githubcardandroidapp.app;
 
 import android.app.Activity;
-import android.graphics.BitmapFactory;
-import android.net.Uri;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.util.Log;
+import android.preference.PreferenceManager;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
-
-import org.json.JSONException;
-
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.List;
 
 public class GitHubCardActivity extends Activity {
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_git_hub_card);
+    public boolean onCreateOptionsMenu(Menu menu) {
 
-        final String userName = "msiddiqi";
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.actionbar_menu, menu);
 
-        new GitHubActivityUserRepositoriesAsyncTask(this).execute(userName);
-        new GitHubActivityUserProfileAsyncTask(this).execute(userName);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_settings:
+                openSettings();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
     }
 
     public void updateRepositoriesList(List<String> userRepositories) {
@@ -63,5 +68,37 @@ public class GitHubCardActivity extends Activity {
                 String.format("%d Followers", profileDetails.getNumberOfFollowers()));
 
         txtBlog.setText(profileDetails.getBlog());
+    }
+
+    private void openSettings() {
+        Intent i = new Intent(this, SettingsActivity.class);
+        startActivityForResult(i, 0);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        loadUserDetails();
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_git_hub_card);
+
+        loadUserDetails();
+    }
+
+    private void loadUserDetails() {
+
+        String userName = getUserNameFromPreference();
+        new GitHubActivityUserRepositoriesAsyncTask(this).execute(userName);
+        new GitHubActivityUserProfileAsyncTask(this).execute(userName);
+    }
+
+    private String getUserNameFromPreference() {
+
+        SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+        String retUserName = sharedPrefs.getString("pref_loginName", "msiddiqi");
+        return retUserName;
     }
 }

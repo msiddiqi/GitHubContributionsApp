@@ -5,4 +5,7 @@
     <string name="app_title">GitHub Contributions</string>
     <string name="ImageContentDescription">profilePic</string>
     <string name="my_repositories">My Repositories</string>
+
+    <string name="userNamePreferenceTitle" >User Name</string>
+    <string name="userNamePreferenceSummary">Enter User Name</string>
 </resources>
