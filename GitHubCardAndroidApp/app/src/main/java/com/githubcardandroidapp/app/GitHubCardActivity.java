@@ -3,8 +3,10 @@ package com.githubcardandroidapp.app;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -12,6 +14,10 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+
+import com.githubcardandroidapp.app.Serialization.PersistenceHandler;
+import com.githubcardandroidapp.app.Serialization.PersistenceHandlerImpl;
+
 import java.text.SimpleDateFormat;
 import java.util.List;
 
@@ -37,15 +43,16 @@ public class GitHubCardActivity extends Activity {
         }
     }
 
-    public void updateRepositoriesList(List<String> userRepositories) {
+    public void updateRepositoriesList(GitHubUserRepositories userRepositories) {
 
+        List<String> userRepositoriesList = userRepositories.getRepositories();
         ListView listView = (ListView)findViewById(R.id.listViewRepositories);
 
         ArrayAdapter<String> adapter =
                 new ArrayAdapter<String>(
                         this,
                         android.R.layout.simple_list_item_1,
-                        userRepositories.toArray(new String[userRepositories.size()]));
+                        userRepositoriesList.toArray(new String[userRepositoriesList.size()]));
 
         listView.setAdapter(adapter);
     }

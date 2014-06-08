@@ -1,5 +1,7 @@
 package com.githubcardandroidapp.app;
 
+import com.githubcardandroidapp.app.Serialization.PersistenceHandlerImpl;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 import java.io.IOException;
@@ -22,6 +24,7 @@ public abstract class GitHubProfileDetailsDownloaderBase implements GitHubProfil
 
     @Override
     public List<String> downloadUserRepositories(String login) throws IOException, JSONException {
+
         String repositoriesUri = getUriForUserRepositories(login);
         return downloadUserRepositoriesCore(repositoriesUri);
     }

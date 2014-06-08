@@ -40,6 +40,14 @@ public class GitHubProfileDetailsImpl implements GitHubProfileDetails
         }
     }
 
+    public GitHubProfileDetailsImpl(GitHubProfileMemento profileMemento, Bitmap avatarBitmap) {
+        this.name = profileMemento.ProfileName;
+        this.blog = profileMemento.Blog;
+        this.numberOfFollowers = profileMemento.NumberOfFollowers;
+        this.createdAt = profileMemento.CreatedAt;
+        this.avatarBitmap = avatarBitmap;
+    }
+
     @Override
     public String getName() { return name; }
 
@@ -56,4 +64,22 @@ public class GitHubProfileDetailsImpl implements GitHubProfileDetails
 
     @Override
     public Bitmap getAvatarBitmap() { return avatarBitmap;}
+
+    public GitHubProfileMemento GetProfileMemento() {
+        GitHubProfileMemento memento = new GitHubProfileMemento();
+        
+        memento.ProfileName = this.name;
+        memento.Blog = this.blog;
+        memento.NumberOfFollowers = this.numberOfFollowers;
+        memento.CreatedAt = this.createdAt;
+        
+        return memento;
+    }
+    
+    public class GitHubProfileMemento {
+        public String ProfileName;
+        public String Blog;
+        public Date CreatedAt;
+        public int NumberOfFollowers;
+    }
 }
