@@ -3,11 +3,12 @@ package com.githubcardandroidapp.app.Serialization;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.util.Log;
 
-import com.githubcardandroidapp.app.GitHubProfileDetails;
-import com.githubcardandroidapp.app.GitHubProfileDetailsImpl;
-import com.githubcardandroidapp.app.GitHubUserRepositories;
-import com.githubcardandroidapp.app.GitHubUserRepositoriesImpl;
+import com.githubcardandroidapp.app.BusinessObjects.GitHubProfileDetails;
+import com.githubcardandroidapp.app.BusinessObjects.GitHubProfileDetailsImpl;
+import com.githubcardandroidapp.app.BusinessObjects.GitHubUserRepositories;
+import com.githubcardandroidapp.app.BusinessObjects.GitHubUserRepositoriesImpl;
 import com.google.gson.Gson;
 
 import java.io.BufferedReader;
@@ -20,10 +21,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
-
-import javax.xml.datatype.Duration;
 
 /**
  * Created by Muhammad on 6/5/2014.
@@ -85,6 +82,10 @@ public class PersistenceHandlerImpl implements PersistenceHandler {
             sb.append(line);
         }
 
+        inputStream.close();
+        isr.close();
+        bufferedReader.close();
+
         return sb.toString();
     }
 
@@ -112,13 +113,14 @@ public class PersistenceHandlerImpl implements PersistenceHandler {
     }
 
     @Override
-    public boolean isPersistedDataCurrent() throws FileNotFoundException {
+    public boolean isPersistedDataCurrent() {
 
         boolean isDataCurrent = false;
 
         File file = null;
         File[] filesInInternalStorage = this.context.getFilesDir().listFiles();
-        for (int i = 0; i < filesInInternalStorage.length; i++){
+
+        for (int i = 0; i < filesInInternalStorage.length; i++) {
             if (filesInInternalStorage[i].getName().equals(RepositoriesFileName)) {
                 file = filesInInternalStorage[i];
                 break;

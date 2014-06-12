@@ -1,7 +1,7 @@
 package com.githubcardandroidapp.app.Serialization;
 
-import com.githubcardandroidapp.app.GitHubProfileDetails;
-import com.githubcardandroidapp.app.GitHubUserRepositories;
+import com.githubcardandroidapp.app.BusinessObjects.GitHubProfileDetails;
+import com.githubcardandroidapp.app.BusinessObjects.GitHubUserRepositories;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
@@ -16,5 +16,5 @@ public interface PersistenceHandler {
     GitHubProfileDetails readProfileFromPersistence() throws IOException;
     GitHubUserRepositories readUserRepositoriesFromPersistence() throws IOException;
 
-    boolean isPersistedDataCurrent() throws FileNotFoundException;
+    boolean isPersistedDataCurrent();
 }

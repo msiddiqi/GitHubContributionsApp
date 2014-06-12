@@ -3,10 +3,8 @@ package com.githubcardandroidapp.app;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -15,15 +13,30 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.githubcardandroidapp.app.BusinessObjects.GitHubProfileDetails;
+import com.githubcardandroidapp.app.BusinessObjects.GitHubUserRepositories;
+import com.githubcardandroidapp.app.GitHubContributionsIO.Profile.GitHubActivityInternalStorageAsyncTask;
+import com.githubcardandroidapp.app.GitHubContributionsIO.Profile.GitHubActivityOnlineUserProfileAsyncTask;
+import com.githubcardandroidapp.app.GitHubContributionsIO.Profile.GitHubProfileAsyncTask;
+import com.githubcardandroidapp.app.GitHubContributionsIO.Repositories.GitHubActivityOnlineUserRepositoriesAsyncTask;
+import com.githubcardandroidapp.app.GitHubContributionsIO.Repositories.GitHubInternalStorageUserRepositoriesAsyncTask;
+import com.githubcardandroidapp.app.GitHubContributionsIO.Repositories.GitHubUserRepositoriesAsyncTask;
 import com.githubcardandroidapp.app.Serialization.PersistenceHandler;
 import com.githubcardandroidapp.app.Serialization.PersistenceHandlerImpl;
 
 import java.text.SimpleDateFormat;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class GitHubCardActivity extends Activity {
 
-    @Override
+    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+    PersistenceHandler persistenceHandler;
+
+    boolean isLoaded = false;
+
     public boolean onCreateOptionsMenu(Menu menu) {
 
         MenuInflater inflater = getMenuInflater();
@@ -45,16 +58,16 @@ public class GitHubCardActivity extends Activity {
 
     public void updateRepositoriesList(GitHubUserRepositories userRepositories) {
 
-        List<String> userRepositoriesList = userRepositories.getRepositories();
-        ListView listView = (ListView)findViewById(R.id.listViewRepositories);
+            List<String> userRepositoriesList = userRepositories.getRepositories();
+            ListView listView = (ListView) findViewById(R.id.listViewRepositories);
 
-        ArrayAdapter<String> adapter =
-                new ArrayAdapter<String>(
-                        this,
-                        android.R.layout.simple_list_item_1,
-                        userRepositoriesList.toArray(new String[userRepositoriesList.size()]));
+            ArrayAdapter<String> adapter =
+                    new ArrayAdapter<String>(
+                            this,
+                            android.R.layout.simple_list_item_1,
+                            userRepositoriesList.toArray(new String[userRepositoriesList.size()]));
 
-        listView.setAdapter(adapter);
+            listView.setAdapter(adapter);
     }
 
     public void updateUserProfile(GitHubProfileDetails profileDetails) {
@@ -92,14 +105,35 @@ public class GitHubCardActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_git_hub_card);
 
-        loadUserDetails();
+        this.persistenceHandler = new PersistenceHandlerImpl(this);
+
+        scheduler.scheduleWithFixedDelay(new Runnable() {
+            public void run() {
+                loadUserDetails();
+            }
+        }, 0, 3, TimeUnit.HOURS);
     }
 
     private void loadUserDetails() {
 
         String userName = getUserNameFromPreference();
-        new GitHubActivityUserRepositoriesAsyncTask(this).execute(userName);
-        new GitHubActivityUserProfileAsyncTask(this).execute(userName);
+
+        boolean isPersistedDataCurrent = this.persistenceHandler.isPersistedDataCurrent();
+
+        GitHubUserRepositoriesAsyncTask gitHubUserRepositoriesAsyncTask =
+                isPersistedDataCurrent && !isLoaded?
+                        new GitHubInternalStorageUserRepositoriesAsyncTask(this) :
+                        new GitHubActivityOnlineUserRepositoriesAsyncTask(this);
+
+        GitHubProfileAsyncTask gitHubProfileAsyncTask =
+                isPersistedDataCurrent && !isLoaded?
+                        new GitHubActivityInternalStorageAsyncTask(this) :
+                        new GitHubActivityOnlineUserProfileAsyncTask(this);
+
+        gitHubUserRepositoriesAsyncTask.execute(userName);
+        gitHubProfileAsyncTask.execute(userName);
+
+        isLoaded = true;
     }
 
     private String getUserNameFromPreference() {
