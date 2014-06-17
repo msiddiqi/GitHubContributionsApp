@@ -17,4 +17,5 @@ public interface PersistenceHandler {
     GitHubUserRepositories readUserRepositoriesFromPersistence() throws IOException;
 
     boolean isPersistedDataCurrent();
+    boolean isPersistedDataAvailable();
 }

@@ -117,6 +117,29 @@ public class PersistenceHandlerImpl implements PersistenceHandler {
 
         boolean isDataCurrent = false;
 
+        File file = getLastPersistedFile();
+
+        if (file != null && file.exists() &&
+                (Calendar.getInstance().getTime().getTime() - file.lastModified()) < 10800000) {
+            isDataCurrent = true;
+        }
+
+        return isDataCurrent;
+    }
+
+    public boolean isPersistedDataAvailable() {
+
+        boolean isDataAvailable = false;
+        File file = getLastPersistedFile();
+
+        if (file != null && file.exists()) {
+            isDataAvailable = true;
+        }
+
+        return isDataAvailable;
+    }
+
+    private File getLastPersistedFile() {
         File file = null;
         File[] filesInInternalStorage = this.context.getFilesDir().listFiles();
 
@@ -127,11 +150,6 @@ public class PersistenceHandlerImpl implements PersistenceHandler {
             }
         }
 
-        if (file != null && file.exists() &&
-                (Calendar.getInstance().getTime().getTime() - file.lastModified()) < 10800000) {
-            isDataCurrent = true;
-        }
-
-        return isDataCurrent;
+        return file;
     }
 }

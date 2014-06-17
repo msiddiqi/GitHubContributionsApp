@@ -8,4 +8,6 @@
 
     <string name="userNamePreferenceTitle" >User Name</string>
     <string name="userNamePreferenceSummary">Enter User Name</string>
+
+    <string name="not_connected_message">Not Connected!</string>
 </resources>

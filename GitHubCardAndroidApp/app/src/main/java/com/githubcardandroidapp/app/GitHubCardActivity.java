@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -21,6 +22,7 @@ import com.githubcardandroidapp.app.GitHubContributionsIO.Profile.GitHubProfileA
 import com.githubcardandroidapp.app.GitHubContributionsIO.Repositories.GitHubActivityOnlineUserRepositoriesAsyncTask;
 import com.githubcardandroidapp.app.GitHubContributionsIO.Repositories.GitHubInternalStorageUserRepositoriesAsyncTask;
 import com.githubcardandroidapp.app.GitHubContributionsIO.Repositories.GitHubUserRepositoriesAsyncTask;
+import com.githubcardandroidapp.app.Network.ConnectivityChecker;
 import com.githubcardandroidapp.app.Serialization.PersistenceHandler;
 import com.githubcardandroidapp.app.Serialization.PersistenceHandlerImpl;
 
@@ -32,8 +34,11 @@ import java.util.concurrent.TimeUnit;
 
 public class GitHubCardActivity extends Activity {
 
-    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-    PersistenceHandler persistenceHandler;
+    private ScheduledExecutorService scheduler;
+
+    private ConnectivityChecker connectivityChecker;
+    private PersistenceHandler persistenceHandler;
+    private boolean isConnected;
 
     boolean isLoaded = false;
 
@@ -67,7 +72,7 @@ public class GitHubCardActivity extends Activity {
                             android.R.layout.simple_list_item_1,
                             userRepositoriesList.toArray(new String[userRepositoriesList.size()]));
 
-            listView.setAdapter(adapter);
+        listView.setAdapter(adapter);
     }
 
     public void updateUserProfile(GitHubProfileDetails profileDetails) {
@@ -97,36 +102,78 @@ public class GitHubCardActivity extends Activity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        loadUserDetails();
+        loadUserDetails(false);
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_git_hub_card);
 
+        this.connectivityChecker = new ConnectivityChecker(this);
         this.persistenceHandler = new PersistenceHandlerImpl(this);
 
-        scheduler.scheduleWithFixedDelay(new Runnable() {
-            public void run() {
-                loadUserDetails();
+        if (this.connectivityChecker.isInternetAvailable()) {
+            registerForGitHubProfileDownload();
+            isConnected = true;
+        }
+        else {
+            isConnected = false;
+            if (!persistenceHandler.isPersistedDataAvailable()) {
+                setContentView(R.layout.not_connected_card);
             }
-        }, 0, 3, TimeUnit.HOURS);
+            else {
+                setContentView(R.layout.activity_git_hub_card);
+                loadUserDetails(true);
+            }
+        }
+
+        this.connectivityChecker.registerNetworkStateChange();
     }
 
-    private void loadUserDetails() {
+    public void registerForOffline() {
+        if (isConnected) {
+            scheduler.shutdownNow();
+            scheduler = null;
+
+            isConnected = false;
+        }
+    }
+
+    public void registerForGitHubProfileDownload() {
+
+        if (!isConnected) {
+            setContentView(R.layout.activity_git_hub_card);
+
+            if (scheduler != null) {
+                scheduler.shutdownNow();
+                scheduler = null;
+            }
+
+            scheduler = Executors.newSingleThreadScheduledExecutor();
+
+            scheduler.scheduleWithFixedDelay(new Runnable() {
+                public void run() {
+                    loadUserDetails(false);
+                }
+            }, 0, 3, TimeUnit.HOURS);
+
+            isConnected = true;
+        }
+    }
+
+    private void loadUserDetails(boolean loadFromPersistence) {
 
         String userName = getUserNameFromPreference();
 
-        boolean isPersistedDataCurrent = this.persistenceHandler.isPersistedDataCurrent();
+        boolean isLoadFromPersistence = loadFromPersistence || this.persistenceHandler.isPersistedDataCurrent();
 
         GitHubUserRepositoriesAsyncTask gitHubUserRepositoriesAsyncTask =
-                isPersistedDataCurrent && !isLoaded?
+                isLoadFromPersistence && !isLoaded?
                         new GitHubInternalStorageUserRepositoriesAsyncTask(this) :
                         new GitHubActivityOnlineUserRepositoriesAsyncTask(this);
 
         GitHubProfileAsyncTask gitHubProfileAsyncTask =
-                isPersistedDataCurrent && !isLoaded?
+                isLoadFromPersistence && !isLoaded?
                         new GitHubActivityInternalStorageAsyncTask(this) :
                         new GitHubActivityOnlineUserProfileAsyncTask(this);
 
