@@ -2,15 +2,16 @@ package com.githubcardandroidapp.app.GitHubContributionsIO.Repositories;
 
 import com.githubcardandroidapp.app.BusinessObjects.GitHubUserRepositories;
 import com.githubcardandroidapp.app.GitHubCardActivity;
+import com.githubcardandroidapp.app.GitHubContributionsIO.Services.GitHubSyncService;
 import com.githubcardandroidapp.app.Serialization.PersistenceHandler;
 import com.githubcardandroidapp.app.Serialization.PersistenceHandlerImpl;
 import java.io.IOException;
 
 public class GitHubInternalStorageUserRepositoriesAsyncTask extends GitHubUserRepositoriesAsyncTask {
 
-    public GitHubInternalStorageUserRepositoriesAsyncTask(GitHubCardActivity gitHubCardActivity) {
+    public GitHubInternalStorageUserRepositoriesAsyncTask(GitHubSyncService gitHubSyncService) {
 
-        super(gitHubCardActivity);
+        super(gitHubSyncService);
     }
 
     @Override
@@ -19,7 +20,8 @@ public class GitHubInternalStorageUserRepositoriesAsyncTask extends GitHubUserRe
         GitHubUserRepositories gitHubUserRepositories = null;
 
         try {
-            gitHubUserRepositories = GetRepositoriesFromInternalStorage();
+            String userName = params[0];
+            gitHubUserRepositories = GetRepositoriesFromInternalStorage(userName);
         }
         catch(IOException ex) {
             ex.printStackTrace();
@@ -28,10 +30,10 @@ public class GitHubInternalStorageUserRepositoriesAsyncTask extends GitHubUserRe
         return gitHubUserRepositories;
     }
 
-    private GitHubUserRepositories GetRepositoriesFromInternalStorage() throws IOException {
+    private GitHubUserRepositories GetRepositoriesFromInternalStorage(String userName) throws IOException {
 
-        PersistenceHandler persistenceHandler = new PersistenceHandlerImpl(this.gitHubCardActivity);
-        GitHubUserRepositories userRepositories = persistenceHandler.readUserRepositoriesFromPersistence();
+        PersistenceHandler persistenceHandler = new PersistenceHandlerImpl(this.gitHubSyncService.getApplicationContext());
+        GitHubUserRepositories userRepositories = persistenceHandler.readUserRepositoriesFromPersistence(userName);
         return userRepositories;
     }
 }

@@ -37,9 +37,9 @@ public class ConnectivityChecker {
         return ret;
     }
 
-    public void registerNetworkStateChange() {
+    /*public void registerNetworkStateChange() {
         this.context.registerReceiver(new ConnectivityReceiver(), new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
-    }
+    }*/
 }
 
 

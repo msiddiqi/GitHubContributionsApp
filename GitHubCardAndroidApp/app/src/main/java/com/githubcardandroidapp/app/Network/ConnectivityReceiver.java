@@ -3,23 +3,28 @@ package com.githubcardandroidapp.app.Network;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.net.ConnectivityManager;
-import com.githubcardandroidapp.app.GitHubCardActivity;
+
+import com.githubcardandroidapp.app.GitHubContributionsIO.Services.GitHubSyncService;
 
 public class ConnectivityReceiver extends BroadcastReceiver {
+
+    private GitHubSyncService gitHubSyncService;
+    private ConnectivityChecker connectivityChecker;
+    private boolean isConnected;
+
+    public ConnectivityReceiver(GitHubSyncService gitHubSyncService){
+        this.gitHubSyncService = gitHubSyncService;
+        this.connectivityChecker = new ConnectivityChecker(gitHubSyncService.getApplicationContext());
+        this.isConnected = this.connectivityChecker.isInternetAvailable();
+    }
 
     @Override
     public void onReceive(Context context, Intent intent) {
 
-        GitHubCardActivity gitHubCardActivity = (GitHubCardActivity)context;
-
-        if (gitHubCardActivity != null) {
-
-            if (((ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE)).getActiveNetworkInfo().isConnected()) {
-                gitHubCardActivity.registerForGitHubProfileDownload();
-            } else {
-                gitHubCardActivity.registerForOffline();
-            }
+        boolean previousState = this.isConnected;
+        this.isConnected = this.connectivityChecker.isInternetAvailable();
+        if (!previousState && isConnected) {
+            this.gitHubSyncService.setApplicationStateConnected();
         }
     }
 }

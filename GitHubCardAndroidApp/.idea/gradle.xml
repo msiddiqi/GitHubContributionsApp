@@ -7,8 +7,8 @@
         <option name="externalProjectPath" value="$PROJECT_DIR$" />
         <option name="modules">
           <set>
-            <option value="C:\Tools\GitHubCardAndroidApp" />
-            <option value="C:\Tools\GitHubCardAndroidApp\app" />
+            <option value="C:\code\Git\android\GitHubContributionsApp\GitHubContributionsApp\GitHubCardAndroidApp" />
+            <option value="C:\code\Git\android\GitHubContributionsApp\GitHubContributionsApp\GitHubCardAndroidApp\app" />
           </set>
         </option>
       </GradleProjectSettings>

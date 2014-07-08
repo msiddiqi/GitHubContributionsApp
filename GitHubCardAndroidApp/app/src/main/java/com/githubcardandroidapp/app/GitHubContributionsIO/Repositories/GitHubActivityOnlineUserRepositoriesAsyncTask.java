@@ -6,6 +6,7 @@ import com.githubcardandroidapp.app.GitHubCardActivity;
 import com.githubcardandroidapp.app.BusinessObjects.GitHubUserRepositories;
 import com.githubcardandroidapp.app.BusinessObjects.GitHubUserRepositoriesImpl;
 import com.githubcardandroidapp.app.GitHubContributionsIO.HttpClientProfileDetailsDownloader;
+import com.githubcardandroidapp.app.GitHubContributionsIO.Services.GitHubSyncService;
 import com.githubcardandroidapp.app.Serialization.PersistenceHandler;
 import com.githubcardandroidapp.app.Serialization.PersistenceHandlerImpl;
 
@@ -15,11 +16,9 @@ import java.util.List;
 
 public class GitHubActivityOnlineUserRepositoriesAsyncTask extends GitHubUserRepositoriesAsyncTask {
 
-    //GitHubCardActivity gitHubCardActivity;
+    public GitHubActivityOnlineUserRepositoriesAsyncTask(GitHubSyncService gitHubSyncService) {
 
-    public GitHubActivityOnlineUserRepositoriesAsyncTask(GitHubCardActivity gitHubCardActivity) {
-
-        super(gitHubCardActivity);
+        super(gitHubSyncService);
     }
 
     @Override
@@ -27,9 +26,10 @@ public class GitHubActivityOnlineUserRepositoriesAsyncTask extends GitHubUserRep
 
         GitHubUserRepositories userRepositories = null;
 
+        String userName = params[0];
         try {
-            userRepositories = GetOnlineRepositories(params[0]);
-            new PersistenceHandlerImpl(this.gitHubCardActivity).serializeRepositories(userRepositories);
+            userRepositories = GetOnlineRepositories(userName);
+            new PersistenceHandlerImpl(this.gitHubSyncService).serializeRepositories(userName, userRepositories);
         }
         catch (IOException exception) {
             Log.i("IO exception : repositories", exception.getMessage());

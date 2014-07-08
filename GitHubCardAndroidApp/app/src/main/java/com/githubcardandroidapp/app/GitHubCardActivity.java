@@ -2,10 +2,8 @@ package com.githubcardandroidapp.app;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.content.SharedPreferences;
+import android.content.IntentFilter;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -13,34 +11,19 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
-
 import com.githubcardandroidapp.app.BusinessObjects.GitHubProfileDetails;
 import com.githubcardandroidapp.app.BusinessObjects.GitHubUserRepositories;
-import com.githubcardandroidapp.app.GitHubContributionsIO.Profile.GitHubActivityInternalStorageAsyncTask;
-import com.githubcardandroidapp.app.GitHubContributionsIO.Profile.GitHubActivityOnlineUserProfileAsyncTask;
-import com.githubcardandroidapp.app.GitHubContributionsIO.Profile.GitHubProfileAsyncTask;
-import com.githubcardandroidapp.app.GitHubContributionsIO.Repositories.GitHubActivityOnlineUserRepositoriesAsyncTask;
-import com.githubcardandroidapp.app.GitHubContributionsIO.Repositories.GitHubInternalStorageUserRepositoriesAsyncTask;
-import com.githubcardandroidapp.app.GitHubContributionsIO.Repositories.GitHubUserRepositoriesAsyncTask;
-import com.githubcardandroidapp.app.Network.ConnectivityChecker;
-import com.githubcardandroidapp.app.Serialization.PersistenceHandler;
-import com.githubcardandroidapp.app.Serialization.PersistenceHandlerImpl;
+import com.githubcardandroidapp.app.GitHubContributionsIO.Services.GitHubCardActivityReceiver;
+import com.githubcardandroidapp.app.GitHubContributionsIO.Services.GitHubSyncService;
 
 import java.text.SimpleDateFormat;
 import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 public class GitHubCardActivity extends Activity {
 
-    private ScheduledExecutorService scheduler;
-
-    private ConnectivityChecker connectivityChecker;
-    private PersistenceHandler persistenceHandler;
-    private boolean isConnected;
-
-    boolean isLoaded = false;
+    public final static String ProfileExtra = "profile";
+    public final static String RepositoriesExtra = "repositories";
+    public final static String IsConnectedExtra = "isConnected";
 
     public boolean onCreateOptionsMenu(Menu menu) {
 
@@ -61,12 +44,22 @@ public class GitHubCardActivity extends Activity {
         }
     }
 
+    public void setConnected(boolean isConnected) {
+        if (isConnected) {
+           setContentView(R.layout.activity_git_hub_card);
+        }
+       else {
+            setContentView(R.layout.not_connected_card);
+        }
+    }
+
     public void updateRepositoriesList(GitHubUserRepositories userRepositories) {
 
-            List<String> userRepositoriesList = userRepositories.getRepositories();
-            ListView listView = (ListView) findViewById(R.id.listViewRepositories);
+        List<String> userRepositoriesList = userRepositories.getRepositories();
 
-            ArrayAdapter<String> adapter =
+        ListView listView = (ListView) findViewById(R.id.listViewRepositories);
+
+        ArrayAdapter<String> adapter =
                     new ArrayAdapter<String>(
                             this,
                             android.R.layout.simple_list_item_1,
@@ -102,91 +95,29 @@ public class GitHubCardActivity extends Activity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        loadUserDetails(false);
+        generateIntentForLoadingInfo();
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        this.connectivityChecker = new ConnectivityChecker(this);
-        this.persistenceHandler = new PersistenceHandlerImpl(this);
+        setContentView(R.layout.loading_card);
+        this.registerReceiver(new GitHubCardActivityReceiver(this), new IntentFilter(GitHubCardActivityReceiver.UpdateConnectedStatusAction));
+        this.registerReceiver(new GitHubCardActivityReceiver(this), new IntentFilter(GitHubCardActivityReceiver.UpdateUserProfileAction));
+        this.registerReceiver(new GitHubCardActivityReceiver(this), new IntentFilter(GitHubCardActivityReceiver.UpdateRepositoriesAction));
 
-        if (this.connectivityChecker.isInternetAvailable()) {
-            registerForGitHubProfileDownload();
-            isConnected = true;
-        }
-        else {
-            isConnected = false;
-            if (!persistenceHandler.isPersistedDataAvailable()) {
-                setContentView(R.layout.not_connected_card);
-            }
-            else {
-                setContentView(R.layout.activity_git_hub_card);
-                loadUserDetails(true);
-            }
-        }
-
-        this.connectivityChecker.registerNetworkStateChange();
+        generateIntentForLoadingInfo();
     }
 
-    public void registerForOffline() {
-        if (isConnected) {
-            scheduler.shutdownNow();
-            scheduler = null;
-
-            isConnected = false;
-        }
+    private void requestGetDataFromService() {
+        //Intent intent = new Intent("GitHubContributionsIO.GitHubSyncService");
+        Intent intent = new Intent(GitHubSyncService.GetDataReceiverAction);
+        this.startService(intent);
     }
-
-    public void registerForGitHubProfileDownload() {
-
-        if (!isConnected) {
-            setContentView(R.layout.activity_git_hub_card);
-
-            if (scheduler != null) {
-                scheduler.shutdownNow();
-                scheduler = null;
-            }
-
-            scheduler = Executors.newSingleThreadScheduledExecutor();
-
-            scheduler.scheduleWithFixedDelay(new Runnable() {
-                public void run() {
-                    loadUserDetails(false);
-                }
-            }, 0, 3, TimeUnit.HOURS);
-
-            isConnected = true;
-        }
-    }
-
-    private void loadUserDetails(boolean loadFromPersistence) {
-
-        String userName = getUserNameFromPreference();
-
-        boolean isLoadFromPersistence = loadFromPersistence || this.persistenceHandler.isPersistedDataCurrent();
-
-        GitHubUserRepositoriesAsyncTask gitHubUserRepositoriesAsyncTask =
-                isLoadFromPersistence && !isLoaded?
-                        new GitHubInternalStorageUserRepositoriesAsyncTask(this) :
-                        new GitHubActivityOnlineUserRepositoriesAsyncTask(this);
-
-        GitHubProfileAsyncTask gitHubProfileAsyncTask =
-                isLoadFromPersistence && !isLoaded?
-                        new GitHubActivityInternalStorageAsyncTask(this) :
-                        new GitHubActivityOnlineUserProfileAsyncTask(this);
-
-        gitHubUserRepositoriesAsyncTask.execute(userName);
-        gitHubProfileAsyncTask.execute(userName);
-
-        isLoaded = true;
-    }
-
-    private String getUserNameFromPreference() {
-
-        SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
-        String retUserName = sharedPrefs.getString("pref_loginName", "msiddiqi");
-        return retUserName;
+    private void generateIntentForLoadingInfo() {
+        Intent intent = new Intent("GitHubContributionsIO.GitHubSyncService");
+        //Intent intent = new Intent(GitHubSyncService.GetDataReceiverAction);
+        this.startService(intent);
     }
 }

@@ -10,12 +10,12 @@ import java.io.IOException;
  */
 public interface PersistenceHandler {
 
-    void serializeProfile(GitHubProfileDetails gitHubProfileDetails) throws IOException;
-    void serializeRepositories(GitHubUserRepositories gitHubUserRepositories) throws IOException;
+    void serializeProfile(String userName, GitHubProfileDetails gitHubProfileDetails) throws IOException;
+    void serializeRepositories(String userName, GitHubUserRepositories gitHubUserRepositories) throws IOException;
 
-    GitHubProfileDetails readProfileFromPersistence() throws IOException;
-    GitHubUserRepositories readUserRepositoriesFromPersistence() throws IOException;
+    GitHubProfileDetails readProfileFromPersistence(String userName) throws IOException;
+    GitHubUserRepositories readUserRepositoriesFromPersistence(String userName) throws IOException;
 
-    boolean isPersistedDataCurrent();
-    boolean isPersistedDataAvailable();
+    boolean isPersistedDataCurrent(String userName);
+    boolean isPersistedDataAvailable(String userName);
 }

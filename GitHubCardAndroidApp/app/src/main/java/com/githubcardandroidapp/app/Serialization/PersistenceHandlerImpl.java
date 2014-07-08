@@ -3,7 +3,6 @@ package com.githubcardandroidapp.app.Serialization;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.util.Log;
 
 import com.githubcardandroidapp.app.BusinessObjects.GitHubProfileDetails;
 import com.githubcardandroidapp.app.BusinessObjects.GitHubProfileDetailsImpl;
@@ -14,7 +13,6 @@ import com.google.gson.Gson;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -37,16 +35,16 @@ public class PersistenceHandlerImpl implements PersistenceHandler {
     }
 
     @Override
-    public void serializeProfile(GitHubProfileDetails gitHubProfileDetails) throws IOException {
+    public void serializeProfile(String userName, GitHubProfileDetails gitHubProfileDetails) throws IOException {
 
         if (gitHubProfileDetails instanceof GitHubProfileDetailsImpl) {
             GitHubProfileDetailsImpl.GitHubProfileMemento memento = ((GitHubProfileDetailsImpl) gitHubProfileDetails).GetProfileMemento();
 
             String jsonProfile = new Gson().toJson(memento);
-            saveObjectToFile(ProfileFileName, jsonProfile.getBytes());
+            saveObjectToFile(getUserProfileFileName(userName), jsonProfile.getBytes());
 
             // save avatar bitmap
-            FileOutputStream outStream = new FileOutputStream(this.context.getFilesDir() + "/" + AvatarBitmapFileName);
+            FileOutputStream outStream = new FileOutputStream(this.context.getFilesDir() + "/" + getAvatarProfileFileName(userName));
             gitHubProfileDetails.getAvatarBitmap().compress(Bitmap.CompressFormat.PNG, 100, outStream);
             outStream.flush();
             outStream.close();
@@ -57,10 +55,12 @@ public class PersistenceHandlerImpl implements PersistenceHandler {
     }
 
     @Override
-    public void serializeRepositories(GitHubUserRepositories gitHubUserRepositories) throws IOException {
+    public void serializeRepositories(String userName, GitHubUserRepositories gitHubUserRepositories) throws IOException {
 
-        String jsonProfile = new Gson().toJson(gitHubUserRepositories);
-        saveObjectToFile(RepositoriesFileName, jsonProfile.getBytes());
+        String jsonRepositories = new Gson().toJson(gitHubUserRepositories);
+        String userRepositoriesFileName = getUserRepositoriesFileName(userName);
+
+        saveObjectToFile(userRepositoriesFileName, jsonRepositories.getBytes());
     }
 
     private void saveObjectToFile(String fileName, byte[] objectData) throws IOException {
@@ -90,12 +90,13 @@ public class PersistenceHandlerImpl implements PersistenceHandler {
     }
 
     @Override
-    public GitHubProfileDetails readProfileFromPersistence() throws IOException {
+    public GitHubProfileDetails readProfileFromPersistence(String userName) throws IOException {
 
-        String profileData = getObjectDataFromFile(this.ProfileFileName);
+        String userFileName = getUserProfileFileName(userName);
+        String profileData = getObjectDataFromFile(userFileName);
         GitHubProfileDetailsImpl.GitHubProfileMemento memento = new Gson().fromJson(profileData, GitHubProfileDetailsImpl.GitHubProfileMemento.class);
 
-        FileInputStream inputStream = new FileInputStream(this.context.getFilesDir() + "/" + this.AvatarBitmapFileName);
+        FileInputStream inputStream = new FileInputStream(this.context.getFilesDir() + "/" + getAvatarProfileFileName(userName));
         Bitmap avatarBitmap = BitmapFactory.decodeStream(inputStream);
 
         GitHubProfileDetails gitHubProfileDetails = new GitHubProfileDetailsImpl(memento, avatarBitmap);
@@ -103,21 +104,37 @@ public class PersistenceHandlerImpl implements PersistenceHandler {
         return gitHubProfileDetails;
     }
 
-    @Override
-    public GitHubUserRepositories readUserRepositoriesFromPersistence() throws IOException {
+    private String getUserProfileFileName(String userName) {
+        String userProfileFileName = String.format("%s_%s", this.ProfileFileName, userName);
+        return userProfileFileName;
+    }
 
-        String repositoriesData = getObjectDataFromFile(this.RepositoriesFileName);
+    private String getAvatarProfileFileName(String userName) {
+        String userAvatarFileName = String.format("%s_%s", this.AvatarBitmapFileName, userName);
+        return userAvatarFileName;
+    }
+
+    private String getUserRepositoriesFileName(String userName) {
+        String userRepositoriesFileName = String.format("%s_%s", this.RepositoriesFileName, userName);
+        return userRepositoriesFileName;
+    }
+
+    @Override
+    public GitHubUserRepositories readUserRepositoriesFromPersistence(String userName) throws IOException {
+
+        String repositoriesData = getObjectDataFromFile(getUserRepositoriesFileName(userName));
 
         GitHubUserRepositories gitHubUserRepositories = new Gson().fromJson(repositoriesData, GitHubUserRepositoriesImpl.class);
         return gitHubUserRepositories;
     }
 
     @Override
-    public boolean isPersistedDataCurrent() {
+    public boolean isPersistedDataCurrent(String userName) {
 
         boolean isDataCurrent = false;
 
-        File file = getLastPersistedFile();
+        String fileName = getUserProfileFileName(userName);
+        File file = getLastPersistedFile(fileName);
 
         if (file != null && file.exists() &&
                 (Calendar.getInstance().getTime().getTime() - file.lastModified()) < 10800000) {
@@ -127,10 +144,11 @@ public class PersistenceHandlerImpl implements PersistenceHandler {
         return isDataCurrent;
     }
 
-    public boolean isPersistedDataAvailable() {
+    @Override
+    public boolean isPersistedDataAvailable(String userName) {
 
         boolean isDataAvailable = false;
-        File file = getLastPersistedFile();
+        File file = getLastPersistedFile(userName);
 
         if (file != null && file.exists()) {
             isDataAvailable = true;
@@ -139,12 +157,12 @@ public class PersistenceHandlerImpl implements PersistenceHandler {
         return isDataAvailable;
     }
 
-    private File getLastPersistedFile() {
+    private File getLastPersistedFile(String fileName) {
         File file = null;
         File[] filesInInternalStorage = this.context.getFilesDir().listFiles();
 
         for (int i = 0; i < filesInInternalStorage.length; i++) {
-            if (filesInInternalStorage[i].getName().equals(RepositoriesFileName)) {
+            if (filesInInternalStorage[i].getName().equals(fileName)) {
                 file = filesInInternalStorage[i];
                 break;
             }
