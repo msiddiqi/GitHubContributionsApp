@@ -1,9 +1,11 @@
 package com.githubcardandroidapp.app;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.os.Vibrator;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -64,6 +66,7 @@ public class GitHubCardActivity extends Activity {
         }
         else {
             showToast(isConnected);
+            vibrateDevice();
         }
     }
 
@@ -143,5 +146,13 @@ public class GitHubCardActivity extends Activity {
         toast.setDuration(Toast.LENGTH_LONG);
 
         toast.show();
+    }
+
+    private void vibrateDevice() {
+        Vibrator vibratorService = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+
+        if (vibratorService != null && vibratorService.hasVibrator()) {
+            vibratorService.vibrate(400);
+        }
     }
 }
