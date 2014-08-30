@@ -21,10 +21,17 @@ public class ConnectivityReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
 
-        boolean previousState = this.isConnected;
-        this.isConnected = this.connectivityChecker.isInternetAvailable();
-        if (!previousState && isConnected) {
-            this.gitHubSyncService.setApplicationStateConnected();
+        //boolean previousState = this.isConnected;
+        //this.isConnected = this.connectivityChecker.isInternetAvailable();
+        //if (!previousState && isConnected) {
+        //    this.gitHubSyncService.setApplicationStateConnected();
+        // }
+
+        boolean isConnectedNow = this.connectivityChecker.isInternetAvailable();
+
+        if (isConnectedNow != isConnected) {
+            isConnected = isConnectedNow;
+            this.gitHubSyncService.setApplicationState(isConnected);
         }
     }
 }

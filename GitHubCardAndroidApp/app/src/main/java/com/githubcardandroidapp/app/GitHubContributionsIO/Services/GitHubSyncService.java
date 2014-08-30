@@ -42,6 +42,7 @@ public class GitHubSyncService extends Service {
     public static final String GetDataReceiverAction = "GetData";
 
     private boolean isRegisteredForDownload;
+    boolean isCurrentlyConnected = false;
 
     public GitHubSyncService() {
 
@@ -103,12 +104,31 @@ public class GitHubSyncService extends Service {
         broadCastUserProfile();
     }
 
-    public void setApplicationStateConnected() {
-        generateConnectivityStateIntent();
-        this.isRegisteredForDownload = false;
+    public void setApplicationState(boolean isConnected) {
 
-        this.registerForGitHubProfileDownload();
+        boolean stateChanged = isCurrentlyConnected ^ isConnected;
+
+        if(generateConnectivityStateIntent() && isConnected && stateChanged) {
+            this.isRegisteredForDownload = false;
+
+            this.registerForGitHubProfileDownload();
+        }
+
+        isCurrentlyConnected = isConnected;
+     //   boolean stateChanged = isCurrentlyConnected ^ isConnected;
+
+     //   if (stateChanged && !isCurrentlyConnected) {
+     //       isCurrentlyConnected = true;
+     //       setApplicationStateConnected();
+     //   }
     }
+
+   // private void setApplicationStateConnected() {
+   //     generateConnectivityStateIntent();
+   //     this.isRegisteredForDownload = false;
+
+ //       this.registerForGitHubProfileDownload();
+   // }
 
     private void broadCastRepositories() {
         Intent intentActivity = getGitHubCardReceiverIntent();
@@ -179,5 +199,4 @@ public class GitHubSyncService extends Service {
                 new ConnectivityReceiver(this),
                 new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
     }
-
 }

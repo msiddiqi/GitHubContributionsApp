@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -11,6 +12,8 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
+
 import com.githubcardandroidapp.app.BusinessObjects.GitHubProfileDetails;
 import com.githubcardandroidapp.app.BusinessObjects.GitHubUserRepositories;
 import com.githubcardandroidapp.app.GitHubContributionsIO.Services.GitHubCardActivityReceiver;
@@ -21,9 +24,14 @@ import java.util.List;
 
 public class GitHubCardActivity extends Activity {
 
+    private boolean isDataLoaded = false;
+
     public final static String ProfileExtra = "profile";
     public final static String RepositoriesExtra = "repositories";
     public final static String IsConnectedExtra = "isConnected";
+
+    private final String ConnectedToastText = "Connected to network";
+    private final String DisconnectedToastText = "Disconnected from network";
 
     public boolean onCreateOptionsMenu(Menu menu) {
 
@@ -45,11 +53,17 @@ public class GitHubCardActivity extends Activity {
     }
 
     public void setConnected(boolean isConnected) {
-        if (isConnected) {
-           setContentView(R.layout.activity_git_hub_card);
+
+        if(!isDataLoaded) {
+            if (isConnected) {
+                setContentView(R.layout.activity_git_hub_card);
+                isDataLoaded = true;
+            } else {
+                setContentView(R.layout.not_connected_card);
+            }
         }
-       else {
-            setContentView(R.layout.not_connected_card);
+        else {
+            showToast(isConnected);
         }
     }
 
@@ -111,13 +125,23 @@ public class GitHubCardActivity extends Activity {
     }
 
     private void requestGetDataFromService() {
-        //Intent intent = new Intent("GitHubContributionsIO.GitHubSyncService");
         Intent intent = new Intent(GitHubSyncService.GetDataReceiverAction);
         this.startService(intent);
     }
     private void generateIntentForLoadingInfo() {
         Intent intent = new Intent("GitHubContributionsIO.GitHubSyncService");
-        //Intent intent = new Intent(GitHubSyncService.GetDataReceiverAction);
         this.startService(intent);
+    }
+
+    private void showToast(boolean isConnectedNow)
+    {
+        String message = isConnectedNow ? ConnectedToastText : DisconnectedToastText;
+
+        Toast toast = Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT);
+        toast.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.CENTER_VERTICAL, 0, 0);
+
+        toast.setDuration(Toast.LENGTH_LONG);
+
+        toast.show();
     }
 }
